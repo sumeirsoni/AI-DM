@@ -47,12 +47,12 @@ class MemoryManager():
     def ask_dm(self, question: str):
         print(f"\nPLayer asks: {question}")
 
-        result = self.search(question, limit=5)
-
+        memories = self.search(question, limit=3)
+        
         context = "Here's what happened in the game:\n\n"
-
-        for i, mem in enumerate(result, 1):
-            context += f"{i}. {mem['content']}"
+        
+        for i, result in enumerate(memories, 1):
+            context += f"{i}. {result.memory}\n"
 
         response = self.ai.messages.create(
             model="claude-sonnet-4-20250514",
