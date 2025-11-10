@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from supermemory import Supermemory
 from schemas import GameEvent
+from anthropic import Anthropic
 
 load_dotenv()
 
@@ -11,6 +12,8 @@ class MemoryManager():
             api_key=os.getenv("SUPERMEMORY_API_KEY"),
             base_url="https://api.supermemory.ai/"
         )
+
+        self.ai = Anthropic(api_key = os.getenv("ANTHROPIC_API_KEY"))
 
         self.current_session = 1
 
@@ -40,3 +43,25 @@ class MemoryManager():
         )
 
         return search_result
+    
+    def ask_dm(self, question: str):
+        print(f"\nPLayer asks: {question}")
+
+        result = self.search(question, limit=5)
+
+        context = "Here's what happened in the game:\n\n"
+
+        for i, mem in enumerate(result, 1):
+            context += f"{i}. {mem['content']}"
+
+        response = self.ai.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=300,
+            messages=[{
+                "role": "user",
+                "content": "You are a Dungeon Master. use this context to answer the player's question"
+            }]
+        )
+
+        dm_response =response.content[0].textprint(f"DM: {dm_response}")
+        return dm_response
