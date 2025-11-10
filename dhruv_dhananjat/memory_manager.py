@@ -63,5 +63,6 @@ class MemoryManager():
             }]
         )
 
-        dm_response =response.content[0].textprint(f"DM: {dm_response}")
+        dm_response =response.content[0].text
+        print(f"DM: {dm_response}")
         return dm_response
