@@ -30,13 +30,13 @@ events = [
     )
 ]
 
-print("Loading scenario...")
 for event in events:
     memory.store_event(event)
 
+print("Loading scenario...")
 
 print("\n" + "="*50)
-print("Scenarion loaded! Now begin the adventure...")
+print("Scenario loaded! Now begin the adventure...")
 
 memory.ask_dm("What did Grimm tell us about the bandits?")
 memory.ask_dm("Where are we right now?")
