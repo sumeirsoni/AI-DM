@@ -17,6 +17,13 @@ class MemoryManager():
 
         self.current_session = 1
 
+        self.current_state = {
+            "location": None,
+            "recent_npcs": [],
+            "recent_events": [],
+            "party_status": "active"
+        }
+
     def store_event(self, event: GameEvent):
         print(f"Storing event: {event.event_type}")
 
@@ -31,11 +38,26 @@ class MemoryManager():
             }
         )
 
-        print(f"Stored with id: {result.id}")
+        self.current_state["location"] = event.location
+        self.current_state["recent_events"].append(event.narrative)
+        
+        if len(self.current_state["recent_events"]) > 5:
+            self.current_state["recent_events"].pop(0)
+        
+        for entity in event.entities:
+            if entity != "party" and entity not in self.current_state["recent_npcs"]:
+                self.current_state["recent_npcs"].append(entity)
+        
+        if len(self.current_state["recent_npcs"]) > 10:
+            self.current_state["recent_npcs"].pop(0)
+        
+        print(f"   ✓ Stored with ID: {result.id}")
+        print(f"   ✓ Updated state: location={self.current_state['location']}")
+        
         return result.id
     
     def search(self, query: str, limit):
-        print(f"Seaching: {query}")
+        print(f"Searching: {query}")
 
         search_result = self.client.search.memories(
             q= query,
@@ -44,25 +66,40 @@ class MemoryManager():
 
         return search_result
     
+    def delete(self, id):
+        self.client.memories.delete(id)
+    
     def ask_dm(self, question: str):
-        print(f"\nPLayer asks: {question}")
-
+        print(f"\n💭 Player asks: {question}")
+        
         memories = self.search(question, limit=3)
         
-        context = "Here's what happened in the game:\n\n"
+        context = "=== CURRENT GAME STATE ===\n"
+        context += f"Location: {self.current_state['location']}\n"
+        context += f"Recent NPCs: {', '.join(self.current_state['recent_npcs'])}\n"
+        context += f"\n=== RECENT EVENTS ===\n"
+        for event in self.current_state["recent_events"]:
+            context += f"- {event}\n"
         
-        for i, result in enumerate(memories, 1):
-            context += f"{i}. {result.memory}\n"
+        context += f"\n=== RELEVANT MEMORIES ===\n"
+        for result in memories.results:
+            context += f"- {result.memory}\n"
 
+        print(context)
+        
         response = self.ai.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=300,
             messages=[{
                 "role": "user",
-                "content": "You are a Dungeon Master. use this context to answer the player's question"
+                "content": f"""You are a Dungeon Master. Use this context to answer the player's question: {context}
+
+                Player's question: {question}
+
+                Answer as the DM, being helpful and staying true to what happened."""
             }]
         )
-
-        dm_response =response.content[0].text
-        print(f"DM: {dm_response}")
+        
+        dm_response = response.content[0].text
+        print(f"\n🎲 DM: {dm_response}")
         return dm_response
