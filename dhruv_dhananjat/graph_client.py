@@ -10,7 +10,7 @@ class GraphClient:
     def __init__(self):
         self.driver = GraphDatabase.driver(
             os.getenv("NEO4J_URI"),
-            auth=(os.getenv("NEO4J_USER"), os.geenv("NEO4J_PASSWORD"))
+            auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
         )
 
     def add_character(self, entity_id: str, name: str, properties: Dict[str, Any] = None):
@@ -24,7 +24,7 @@ class GraphClient:
                 """,
                 entity_id=entity_id,
                 name=name,
-                properites=props
+                properties=props
             )
             print(f"Added character: {name}")
     
@@ -40,7 +40,7 @@ class GraphClient:
                 name=name,
                 properties=props
             )
-            print("Added location:, {name}")
+            print(f"Added location: {name}")
 
     def add_relationship(self, from_id: str, to_id: str, rel_type: str):
         with self.driver.session() as session:
@@ -54,12 +54,12 @@ class GraphClient:
             )
             print(f"Created relationship: {from_id} -{rel_type}-> {to_id}")
     
-    def get_entity_relation(self, entity_id: str) -> List[Dict[str, Any]]:
+    def get_entity_relationships(self, entity_id: str) -> List[Dict[str, Any]]:
         with self.driver.session() as session:
             result = session.run(
                 """
                 MATCH (e {id: $entity_id})-[r]-(other)
-                RETURN type(r) as relationship, other.id as other_name, other.name as other_name
+                RETURN type(r) as relationship, other.id as id, other.name as other_name
                 """,
                 entity_id=entity_id
             )
