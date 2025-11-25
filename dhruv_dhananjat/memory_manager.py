@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from supermemory import Supermemory
 from schemas import GameEvent
 from anthropic import Anthropic
+from graph_client import GraphClient
 
 load_dotenv()
 
@@ -12,7 +13,7 @@ class MemoryManager():
             api_key=os.getenv("SUPERMEMORY_API_KEY"),
             base_url="https://api.supermemory.ai/"
         )
-
+        self.graph = GraphClient()
         self.ai = Anthropic(api_key = os.getenv("ANTHROPIC_API_KEY"))
 
         self.current_session = 1
@@ -37,22 +38,43 @@ class MemoryManager():
                 'location': event.location
             }
         )
+        
+        for entity in event.entities:
+            if entity == "party":
+                continue 
+            elif "loc_" in entity or entity == event.location:
+                self.graph.add_location(
+                    entity_id=entity,
+                    name=entity.replace("_", " ").title()
+                )
+            else:
+                self.graph.add_character(
+                    entity_id=entity,
+                    name=entity.replace("_", " ").title()
+                )
+
+        for i, entity1 in enumerate(event.entities):
+            if entity1 == "party":
+                continue
+            for entity2 in event.entities[i+1:]:
+                if entity2 == "party":
+                    continue
+                self.graph.add_relationship(entity1, entity2, "KNOWS")
 
         self.current_state["location"] = event.location
         self.current_state["recent_events"].append(event.narrative)
-        
-        if len(self.current_state["recent_events"]) > 5:
+
+        if len(self.current_state["recent_events"]) > 3:
             self.current_state["recent_events"].pop(0)
         
         for entity in event.entities:
             if entity != "party" and entity not in self.current_state["recent_npcs"]:
                 self.current_state["recent_npcs"].append(entity)
-        
-        if len(self.current_state["recent_npcs"]) > 10:
+        if len(self.current_state["recent_npcs"]) > 5:
             self.current_state["recent_npcs"].pop(0)
         
-        print(f"   ✓ Stored with ID: {result.id}")
-        print(f"   ✓ Updated state: location={self.current_state['location']}")
+        print(f"   ✓ Stored in Supermemory: {result.id}")
+        print(f"   ✓ Updated graph with {len(event.entities)} entities")
         
         return result.id
     
