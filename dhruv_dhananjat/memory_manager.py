@@ -100,13 +100,13 @@ class MemoryManager():
         context += f"Location: {self.current_state['location']}\n"
         context += f"Recent NPCs: {', '.join(self.current_state['recent_npcs'])}\n"
 
-        context += "\n=== ENTITY RELATIONSHIPS ===\N"
-        for npc in self.current_satate['recent_npcs'][:3]:
+        context += "\n=== ENTITY RELATIONSHIPS ===\n"
+        for npc in self.current_state['recent_npcs'][:3]:
             relationships = self.graph.get_entity_relationships(npc)
             if relationships:
                 context += f"{npc.replace('_', ' ').title()}:\n"
                 for rel in relationships[:3]:
-                    context += f" - {rel['relationships']}: {rel['other_name']}\n"
+                    context += f" - {rel['relationship']}: {rel['other_name']}\n"
 
         context += f"\n=== RECENT EVENTS ===\n"
         for event in self.current_state["recent_events"]:
