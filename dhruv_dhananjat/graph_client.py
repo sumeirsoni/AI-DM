@@ -33,7 +33,7 @@ class GraphClient:
             props = properties or {}
             session.run(
                 """
-                MERGE (l: Location {id: $entity_id})
+                MERGE (l:Location {id: $entity_id})
                 SET l.name= $name, l += $properties
                 """,
                 entity_id=entity_id,
@@ -64,6 +64,14 @@ class GraphClient:
                 entity_id=entity_id
             )
             return [dict(record) for record in result]
+        
+    def delete_char(self, entity_id: str):
+        with self.driver.session() as session:
+            'MATCH (x:Character {id: $entity_id}) DETACH DELETE x'
+
+    def delete_loc(self, entity_id: str):
+        with self.driver.session() as session:
+            'MATCH (x:Location {id: $entity_id}) DETACH DELETE x'
     
     def close(self):
         self.driver.close()
