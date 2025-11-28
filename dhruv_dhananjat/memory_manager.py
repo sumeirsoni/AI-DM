@@ -1,4 +1,5 @@
 import os
+import json
 from dotenv import load_dotenv
 from supermemory import Supermemory
 from schemas import GameEvent
@@ -58,26 +59,17 @@ class MemoryManager():
             else: 
                 self.graph.add_character(entity, entity.replace("_", " ").title())
                 characters.append(entity)
-        
-        if event.event_type == "combat":
-            for i, char1 in enumerate(characters):
-                for char2 in characters[i+1:]:
-                    self.graph.add_hostile_to(char1, char2)
-        elif event.event_type == "information":
-            for char in characters:
-                for faction in factions:
-                    self.graph.add_serves(char, faction)
-                for other_char in characters:
-                    if char != other_char:
-                        self.graph.add_relationship(char, other_char, "KNOWS")
-        else:
-            for i, char1 in enumerate(characters):
-                for char2 in characters[i+1:]:
-                    self.graph.add_relationship(char1, char2, "KNOWS")
-        
-        for char in characters:
-            if locations:
-                self.graph.add_located_in(char, locations[0])
+
+        relationships = self.extract_relationships(event, characters, locations, factions)
+        print(f"AI extracted {len(relationships)} relationships")
+
+        for rel in relationships:
+            from_id = rel.get('from')
+            to_id = rel.get('to')
+            rel_type = rel.get('type')
+            
+            if from_id and to_id and rel_type:
+                self.graph.add_relationship(from_id, to_id, rel_type)
 
         self.current_state["location"] = event.location
         self.current_state["recent_events"].append(event.narrative)
@@ -163,7 +155,7 @@ class MemoryManager():
             print(f" - {rel['relationship']}: {rel['other_name']}")
 
         return relationships
-    
+  
     def _detect_entity_type(self, entity: str, event: GameEvent) -> str:
         entity_lower = entity.lower()
         
@@ -176,3 +168,43 @@ class MemoryManager():
             return "faction"
         
         return "character"
+    
+    def extract_relationships(self, event: GameEvent, characters: list, locations: list, factions: list):
+        prompt = f"""
+            Analyze this D&D event and extract ONLY the relationships that are
+            explicitly stated or clearly implied
+        
+
+            Event: {event.narrative}
+
+            Entities:
+            - Characters: {', '.join(characters)}
+            - Locations: {', '.join(locations)}
+            - Factions: {', '.join(factions)}
+
+            Return a JSON list of relationships in this format:
+            [
+                {{"from": "entity_id", "to": "entity_id", "type": "KNOWS"}},
+                {{"from": "entity_id", "to": "entity_id", "type": "SERVES"}},
+                {{"from": "entity_id", "to": "entity_id", "type": "MEMBER_OF"}},
+                {{"from": "entity_id", "to": "entity_id", "type": "HOSTILE_TO"}},
+                {{"from": "entity_id", "to": "entity_id", "type": "LOCATED_IN"}}  
+            ]
+
+            Only include relationships that are CLEARLY indicated in the text.locals
+
+            Return ONLY the JSON array, nothing else
+            """
+        
+        response = self.ai.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=500,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        try:
+            relationships = json.loads(response.content[0].text)
+            return relationships
+        except:
+            print("Could not parse AI relationships, using fallback")
+            return []
