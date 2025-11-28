@@ -72,6 +72,23 @@ class GraphClient:
     def delete_loc(self, entity_id: str):
         with self.driver.session() as session:
             'MATCH (x:Location {id: $entity_id}) DETACH DELETE x'
+
+    def add_member_of(self, character_id: str, faction_id: str):
+        self.add_relationship(character_id, faction_id, "MEMBER_OF")
+
+    def add_serves(self, character_id: str, faction_id: str):
+        self.add_relationship(character_id, faction_id, "SERVES")
+
+    def add_located_in(self, character_id: str, location_id: str):
+        self.add_relationship(character_id, location_id, "LOCATED_IN")
+
+    def add_hostile_to(self, entity1_id: str, entity2_id: str):
+        self.add_relationship(entity1_id, entity2_id, "HOSTILE_TO")
+        self.add_relationship(entity2_id, entity1_id, "HOSTILE_TO")
+
+    def add_allied_with(self, entity1_id: str, entity2_id: str):
+        self.add_relationship(entity1_id, entity2_id, "ALLIED_WITH")
+        self.add_relationship(entity2_id, entity1_id, "ALLIED_WITH")
     
     def close(self):
         self.driver.close()
