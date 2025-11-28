@@ -45,8 +45,6 @@ class MemoryManager():
         factions = []
         
         for entity in event.entities:
-            if entity == "party":
-                continue
                 
             entity_type = self._detect_entity_type(entity, event)
             
@@ -171,7 +169,14 @@ class MemoryManager():
     
     def extract_relationships(self, event: GameEvent, characters: list, locations: list, factions: list):
         prompt = f"""
-            Analyze this D&D event and extract the relationships between entities
+            Analyze this D&D event and extract the relationships between entities and those
+            relationships that can be implied. Your options for relationships are:
+
+            - KNOWS_ABOUT
+            - SERVES
+            - MEMBER_OF
+            - HOSTILE_TO
+            - LOCATED_IN
         
 
             Event: {event.narrative}
