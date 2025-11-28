@@ -1,7 +1,12 @@
 from memory_manager import MemoryManager
+from graph_client import GraphClient
 from schemas import GameEvent
 
 memory = MemoryManager()
+graph = GraphClient()
+
+graph.clear_all()
+graph.close()
 
 events = [
     GameEvent(
