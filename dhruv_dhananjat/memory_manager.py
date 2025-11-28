@@ -171,8 +171,7 @@ class MemoryManager():
     
     def extract_relationships(self, event: GameEvent, characters: list, locations: list, factions: list):
         prompt = f"""
-            Analyze this D&D event and extract ONLY the relationships that are
-            explicitly stated or clearly implied
+            Analyze this D&D event and extract the relationships between entities
         
 
             Event: {event.narrative}
@@ -184,14 +183,12 @@ class MemoryManager():
 
             Return a JSON list of relationships in this format:
             [
-                {{"from": "entity_id", "to": "entity_id", "type": "KNOWS"}},
+                {{"from": "entity_id", "to": "entity_id", "type": "KNOWS_ABOUT"}},
                 {{"from": "entity_id", "to": "entity_id", "type": "SERVES"}},
                 {{"from": "entity_id", "to": "entity_id", "type": "MEMBER_OF"}},
                 {{"from": "entity_id", "to": "entity_id", "type": "HOSTILE_TO"}},
                 {{"from": "entity_id", "to": "entity_id", "type": "LOCATED_IN"}}  
             ]
-
-            Only include relationships that are CLEARLY indicated in the text.locals
 
             Return ONLY the JSON array, nothing else
             """
