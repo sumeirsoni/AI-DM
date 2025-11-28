@@ -12,7 +12,7 @@ events = [
     GameEvent(
         event_type="arrival",
         narrative="The party enters the Rusty Tankard tavern. Old Grimm the dwarf bartender nods at them.",
-        entities=["party", "grimm"],
+        entities=["party", "grimm", "rusty tankard"],
         location="rusty_tankard",
         session=1,
         importance=5
