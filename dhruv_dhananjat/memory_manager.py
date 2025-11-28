@@ -39,27 +39,45 @@ class MemoryManager():
             }
         )
         
+        characters = []
+        locations = []
+        factions = []
+        
         for entity in event.entities:
             if entity == "party":
-                continue 
-            elif "loc_" in entity or entity == event.location:
-                self.graph.add_location(
-                    entity_id=entity,
-                    name=entity.replace("_", " ").title()
-                )
-            else:
-                self.graph.add_character(
-                    entity_id=entity,
-                    name=entity.replace("_", " ").title()
-                )
-
-        for i, entity1 in enumerate(event.entities):
-            if entity1 == "party":
                 continue
-            for entity2 in event.entities[i+1:]:
-                if entity2 == "party":
-                    continue
-                self.graph.add_relationship(entity1, entity2, "KNOWS")
+                
+            entity_type = self._detect_entity_type(entity, event)
+            
+            if entity_type == "location":
+                self.graph.add_location(entity, entity.replace("_", " ").title())
+                locations.append(entity)
+            elif entity_type == "faction":
+                self.graph.add_location(entity, entity.replace("_", " ").title())
+                factions.append(entity)
+            else: 
+                self.graph.add_character(entity, entity.replace("_", " ").title())
+                characters.append(entity)
+        
+        if event.event_type == "combat":
+            for i, char1 in enumerate(characters):
+                for char2 in characters[i+1:]:
+                    self.graph.add_hostile_to(char1, char2)
+        elif event.event_type == "information":
+            for char in characters:
+                for faction in factions:
+                    self.graph.add_serves(char, faction)
+                for other_char in characters:
+                    if char != other_char:
+                        self.graph.add_relationship(char, other_char, "KNOWS")
+        else:
+            for i, char1 in enumerate(characters):
+                for char2 in characters[i+1:]:
+                    self.graph.add_relationship(char1, char2, "KNOWS")
+        
+        for char in characters:
+            if locations:
+                self.graph.add_located_in(char, locations[0])
 
         self.current_state["location"] = event.location
         self.current_state["recent_events"].append(event.narrative)
