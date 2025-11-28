@@ -145,3 +145,16 @@ class MemoryManager():
             print(f" - {rel['relationship']}: {rel['other_name']}")
 
         return relationships
+    
+    def _detect_entity_type(self, entity: str, event: GameEvent) -> str:
+        entity_lower = entity.lower()
+        
+        if any(word in entity_lower for word in ['tavern', 'castle', 'dungeon', 'forest', 'cave', 'town', 'city']):
+            return "location"
+        if entity == event.location:
+            return "location"
+        
+        if any(word in entity_lower for word in ['guild', 'faction', 'gang', 'clan', 'order', 'brotherhood']):
+            return "faction"
+        
+        return "character"
